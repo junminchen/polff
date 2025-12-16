@@ -30,4 +30,4 @@ if __name__ == "__main__":
     logger.info(str(config))
 
     for i in range(config.get('shards')):
-        dataset = IMDataset.process(args.conf, shard_id=i)
+        dataset = IMDataset.process(config._config, shard_id=i)
