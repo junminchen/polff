@@ -256,7 +256,6 @@ def mass_fraction_to_counts(mass_fraction_list: List[Dict], total_molecules=1000
         component['name']: mole_equivalent[component['name']] / total_mole_equivalent
         for component in solvents + salts
     }
-
     counts: Dict[str, int] = {}
 
     # 溶剂分子数
@@ -282,14 +281,6 @@ def mass_fraction_to_counts(mass_fraction_list: List[Dict], total_molecules=1000
 
         counts[cation_abbr] = counts.get(cation_abbr, 0) + salt_mol_count
         counts[anion_abbr] = counts.get(anion_abbr, 0) + salt_mol_count
-
-    # 修正四舍五入误差
-    actual_total = sum(counts.values())
-    if actual_total != total_molecules:
-        diff = total_molecules - actual_total
-        max_comp = max(counts, key=counts.get)
-        counts[max_comp] += diff
-
     return counts
 
 
