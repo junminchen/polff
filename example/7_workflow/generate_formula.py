@@ -47,71 +47,9 @@ BOX_NM = 5.0
 VOL_CM3 = (BOX_NM ** 3) * 1e-21  # nm³ → cm³
 VOL_L = VOL_CM3 * 1e-3           # cm³ → L
 
-def mass_fraction_to_counts(mass_fraction_dict, db, solute_to_ions=None, box_nm=5.0):
-    NA = 6.02214076e23
-    vol_cm3 = (box_nm ** 3) * 1e-21  # nm³ → cm³
-
-    if solute_to_ions is None:
-        solute_to_ions = {
-            'LiPF6': ('LI', 'PF6'),
-            'LiFSI': ('LI', 'FSI'),
-            'LiTFSI': ('LI', 'TFSI'),
-            'LiDFOB': ('LI', 'DFOB'),
-            'NaPF6': ('NA', 'PF6'),
-            'NaFSI': ('NA', 'FSI'),
-            'NaTFSI': ('NA', 'TFSI'),
-        }
-
-    # auto_generate_solute_to_ions ?
-
-    # 分离溶剂和盐类
-    solvent_names = [name for name in mass_fraction_dict if name not in solute_to_ions]
-    salt_names = [name for name in mass_fraction_dict if name in solute_to_ions]
-
-    # 检查溶剂密度是否缺失
-    missing = [name for name in solvent_names if name not in db or db[name][1] is None]
-    if missing:
-        raise ValueError(f"Missing density info for solvents: {missing}")
-
-    # Normalize fractions
-    total = sum(mass_fraction_dict.values())
-    weight_fractions = {name: w / total for name, w in mass_fraction_dict.items()}
-
-    # Compute mixture density using only solvents
-    inv_rho_mix = sum(weight_fractions[name] / db[name][1] for name in solvent_names)
-    rho_mix = 1.0 / inv_rho_mix  # g/cm³
-
-    # Total mass in box
-    total_mass_g = rho_mix * vol_cm3
-
-    # Compute counts
-    counts = {}
-
-    # Step 1: 溶剂
-    for name in solvent_names:
-        wf = weight_fractions[name]
-        mass_g = total_mass_g * wf
-        mol_mass = db[name][0]
-        mol_count = int(round((mass_g / mol_mass) * NA))
-        counts[name] = mol_count
-
-    # Step 2: 盐类（拆分为离子）
-    total_solvent_mass = sum((counts[n] * db[n][0]) / NA for n in solvent_names)
-    for name in salt_names:
-        wf = weight_fractions[name]
-        salt_mass_g = total_solvent_mass * wf / sum(weight_fractions[n] for n in solvent_names)  # scale to solvent mass
-        cation, anion = solute_to_ions[name]
-        if cation not in db or anion not in db:
-            raise KeyError(f"Missing molar mass for ion components of {name}")
-        mol_mass = db[cation][0] + db[anion][0]
-        mol_count = int(round((salt_mass_g / mol_mass) * NA))
-        counts[cation] = counts.get(cation, 0) + mol_count
-        counts[anion] = counts.get(anion, 0) + mol_count
-
-    return counts
 
 # ========== PDB 质量提取 ==========
-def get_mol_masses():
+def get_mol_masses(mol_counts,template_dir):
     def parse_pdb_for_masses(pdb_file):
         masses = []
         with open(pdb_file,'r') as f:
@@ -126,7 +64,8 @@ def get_mol_masses():
                         masses.append(element_to_mass[element])
         return masses
     mol_masses = {}
-    for pdb_file in glob.glob('template/input_data/*/*.pdb'):
+    for key in mol_counts:
+        pdb_file = f'{template_dir}/input_data/{key}/{key}.pdb'
         mol_name = os.path.splitext(os.path.basename(pdb_file))[0]
         masses = parse_pdb_for_masses(pdb_file)
         if masses: mol_masses[mol_name] = masses
@@ -726,7 +665,7 @@ if __name__ == "__main__":
             continue
         else:
             os.makedirs(folder, exist_ok=True)
-            mol_masses = get_mol_masses()
+            mol_masses = get_mol_masses(mol_counts,template_dir=template_dir)
             save_run_file(folder, mol_masses, mol_counts, temperature=temperature, template_dir=template_dir)
             save_pack_file(folder, mol_counts, template_dir=template_dir)
             save_topo_file(folder, mol_counts, template_dir=template_dir)
