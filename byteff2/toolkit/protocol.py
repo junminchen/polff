@@ -6,7 +6,9 @@ from enum import Enum
 
 import ase.io as aio
 import numpy as np
+import openmm as omm
 import openmm.app as app
+import openmm.unit as openmm_unit
 import pandas as pd
 
 from byteff2.md_utils.md_run import dcd_read, npt_run, nvt_run, rescale_box, volume_calc
@@ -299,8 +301,6 @@ class Protocol:
         Returns:
             Dictionary of Component objects keyed by component name
         """
-        import openmm.unit as openmm_unit
-        
         logger.info('Reconstructing components from PDB and System')
         
         components = {}
@@ -336,8 +336,8 @@ class Protocol:
                             charge = params[0]  # First parameter is charge
                             residue_components[res_name]['total_charge'] += charge
                             break
-                        except:
-                            pass
+                        except (AttributeError, IndexError, RuntimeError) as e:
+                            logger.debug(f'Could not extract charge for atom {atom_idx}: {e}')
         
         # Create Component objects
         for res_name, res_info in residue_components.items():

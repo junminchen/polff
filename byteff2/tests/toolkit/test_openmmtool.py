@@ -39,6 +39,11 @@ END
 
 def create_simple_system():
     """Create a simple OpenMM System for testing."""
+    # Amoeba multipole force parameters
+    THOLE_DAMPING = 0.39
+    DAMPING_FACTOR = 1.0
+    POLARIZABILITY = 0.1
+    
     system = omm.System()
     
     # Add three particles (for a water molecule)
@@ -62,17 +67,17 @@ def create_simple_system():
     # Oxygen with negative charge
     amoeba_force.addMultipole(-0.8, dipoles, quadrupoles,
                              omm.AmoebaMultipoleForce.NoAxisType, 0, 1, 2,
-                             0.39, 1.0, 0.1)
+                             THOLE_DAMPING, DAMPING_FACTOR, POLARIZABILITY)
     
     # Hydrogen 1 with positive charge
     amoeba_force.addMultipole(0.4, dipoles, quadrupoles,
                              omm.AmoebaMultipoleForce.NoAxisType, 0, 1, 2,
-                             0.39, 1.0, 0.1)
+                             THOLE_DAMPING, DAMPING_FACTOR, POLARIZABILITY)
     
     # Hydrogen 2 with positive charge
     amoeba_force.addMultipole(0.4, dipoles, quadrupoles,
                              omm.AmoebaMultipoleForce.NoAxisType, 0, 1, 2,
-                             0.39, 1.0, 0.1)
+                             THOLE_DAMPING, DAMPING_FACTOR, POLARIZABILITY)
     
     amoeba_force.setNonbondedMethod(omm.AmoebaMultipoleForce.NoCutoff)
     system.addForce(amoeba_force)
