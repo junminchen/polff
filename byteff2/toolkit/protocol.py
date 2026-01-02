@@ -6,14 +6,16 @@ from enum import Enum
 
 import ase.io as aio
 import numpy as np
+import openmm as omm
 import openmm.app as app
+import openmm.unit as openmm_unit
 import pandas as pd
 
 from byteff2.md_utils.md_run import dcd_read, npt_run, nvt_run, rescale_box, volume_calc
 from byteff2.md_utils.onsager_conductivity import onsager_calc
 from byteff2.md_utils.viscosity import nonequ_run, viscosity_calc
 from byteff2.toolkit.gmxtool import GMXScript
-from byteff2.toolkit.openmmtool import generate_openmm_system
+from byteff2.toolkit.openmmtool import generate_openmm_system, load_openmm_system
 from byteff2.train.utils import get_nb_params, load_model
 from bytemol.core import Molecule
 from bytemol.toolkit.gmxtool.topparse import RecordAtomType, RecordMolecule, Records, TopoFullSystem
@@ -31,10 +33,31 @@ class ComponentType(Enum):
 
 class Component:
 
-    def __init__(self, topo_mol):
-        self.name = topo_mol.name
-        self.atoms = topo_mol.atoms
-        self.net_charge = sum([atom.charge for atom in topo_mol.atoms])
+    def __init__(self, topo_mol=None, name=None, charge=None, mass=None):
+        """Initialize a Component from either a topo_mol or manual parameters.
+        
+        Args:
+            topo_mol: Topology molecule object (traditional initialization)
+            name: Component name (manual initialization)
+            charge: Net charge (manual initialization)
+            mass: Molar mass (manual initialization)
+        """
+        if topo_mol is not None:
+            # Traditional initialization from topo_mol
+            self.name = topo_mol.name
+            self.atoms = topo_mol.atoms
+            self.net_charge = sum([atom.charge for atom in topo_mol.atoms])
+            self.molar_mass = sum([atom.mass for atom in topo_mol.atoms])
+        else:
+            # Manual initialization
+            if name is None or charge is None or mass is None:
+                raise ValueError("When topo_mol is not provided, name, charge, and mass must be specified")
+            self.name = name
+            self.atoms = []
+            self.net_charge = charge
+            self.molar_mass = mass
+        
+        # Set component type based on charge
         if self.net_charge > 1e-5:
             self.type = ComponentType.CATION
             self.density = 0.25
@@ -44,9 +67,9 @@ class Component:
         else:
             self.type = ComponentType.SOLVENT
             self.density = 0.9
+        
         self.molar_ratio = -1
         self.molar_num = -1
-        self.molar_mass = sum([atom.mass for atom in topo_mol.atoms])
         self.itp_records = None
         self.atp_records = None
 
@@ -268,6 +291,72 @@ class Protocol:
         shutil.copy(f'{working_dir}/system.top', f'{self.params_dir}/system.top')
         return components
 
+    def reconstruct_components(self, pdb: app.PDBFile, system: omm.System) -> dict:
+        """Reconstruct component information from a loaded PDB and System.
+        
+        Args:
+            pdb: OpenMM PDBFile object
+            system: OpenMM System object
+            
+        Returns:
+            Dictionary of Component objects keyed by component name
+        """
+        logger.info('Reconstructing components from PDB and System')
+        
+        components = {}
+        residue_components = {}
+        
+        # Group atoms by residue to infer components
+        for residue in pdb.topology.residues():
+            res_name = residue.name
+            if res_name not in residue_components:
+                residue_components[res_name] = {
+                    'atoms': [],
+                    'count': 0,
+                    'total_charge': 0.0,
+                    'total_mass': 0.0
+                }
+            
+            residue_components[res_name]['count'] += 1
+            
+            # Get mass and charge for each atom in the residue
+            for atom in residue.atoms():
+                atom_idx = atom.index
+                mass = system.getParticleMass(atom_idx).value_in_unit(openmm_unit.dalton)
+                residue_components[res_name]['total_mass'] += mass
+                
+                # Try to extract charge from forces
+                # AmoebaMultipoleForce stores charge information
+                for i in range(system.getNumForces()):
+                    force = system.getForce(i)
+                    if hasattr(force, 'getMultipoleParameters'):
+                        # AmoebaMultipoleForce
+                        try:
+                            params = force.getMultipoleParameters(atom_idx)
+                            charge = params[0]  # First parameter is charge
+                            residue_components[res_name]['total_charge'] += charge
+                            break
+                        except (AttributeError, IndexError, RuntimeError) as e:
+                            logger.debug(f'Could not extract charge for atom {atom_idx}: {e}')
+        
+        # Create Component objects
+        for res_name, res_info in residue_components.items():
+            count = res_info['count']
+            avg_charge = res_info['total_charge'] / count if count > 0 else 0.0
+            avg_mass = res_info['total_mass'] / count if count > 0 else 0.0
+            
+            component = Component(
+                name=res_name,
+                charge=avg_charge,
+                mass=avg_mass
+            )
+            component.molar_num = count
+            components[res_name] = component
+            
+            logger.info(f'Reconstructed component {res_name}: count={count}, charge={avg_charge:.4f}, mass={avg_mass:.4f}')
+        
+        return components
+
     def run_protocol(self,):
         raise NotImplementedError
 
@@ -283,22 +372,37 @@ class DensityProtocol(Protocol):
 
     def run_protocol(self):
         logger.info('running density protocol')
-        nonbonded_params = self.generate_ff_params(self.config['smiles'])
-        _ = self.build_system(
-            self.config['natoms'],
-            self.config['components'],
-            self.config['working_dir'],
-        )
-        gro_file = f"{self.params_dir}/solvent_salt.gro"
-        top_file = f"{self.params_dir}/system.top"
-        grofileparser = app.GromacsGroFile(gro_file)
-        input_positions = grofileparser.positions
-        unit_cell = grofileparser.getUnitCellDimensions()
-        input_top, input_system = generate_openmm_system(
-            top_file,
-            nonbonded_params,
-            unit_cell,
-        )
+        
+        # Check if pre-existing system files are provided
+        if 'system_pdb' in self.config and 'system_xml' in self.config:
+            logger.info('Loading pre-existing system from PDB and XML files')
+            pdb_file = self.config['system_pdb']
+            xml_file = self.config['system_xml']
+            
+            input_top, input_system = load_openmm_system(pdb_file, xml_file)
+            input_positions = input_top.positions
+            unit_cell = input_top.topology.getPeriodicBoxVectors()
+            
+            # Reconstruct components from loaded system
+            _ = self.reconstruct_components(input_top, input_system)
+        else:
+            # Traditional workflow: generate params and build system
+            nonbonded_params = self.generate_ff_params(self.config['smiles'])
+            _ = self.build_system(
+                self.config['natoms'],
+                self.config['components'],
+                self.config['working_dir'],
+            )
+            gro_file = f"{self.params_dir}/solvent_salt.gro"
+            top_file = f"{self.params_dir}/system.top"
+            grofileparser = app.GromacsGroFile(gro_file)
+            input_positions = grofileparser.positions
+            unit_cell = grofileparser.getUnitCellDimensions()
+            input_top, input_system = generate_openmm_system(
+                top_file,
+                nonbonded_params,
+                unit_cell,
+            )
 
         npt_run(
             top=input_top,
@@ -340,22 +444,38 @@ class TransportProtocol(Protocol):
         npt_steps = 4000000
         nvt_steps = 10000000
         nonequ_steps = 1000000
-        nonbonded_params = self.generate_ff_params(self.config['smiles'])
-        self.components = self.build_system(
-            self.config['natoms'],
-            self.config['components'],
-            self.config['working_dir'],
-        )
-        gro_file = f"{self.params_dir}/solvent_salt.gro"
-        top_file = f"{self.params_dir}/system.top"
-        grofileparser = app.GromacsGroFile(gro_file)
-        input_positions = grofileparser.positions
-        unit_cell = grofileparser.getUnitCellDimensions()
-        input_top, input_system = generate_openmm_system(
-            top_file,
-            nonbonded_params,
-            unit_cell,
-        )
+        
+        # Check if pre-existing system files are provided
+        if 'system_pdb' in self.config and 'system_xml' in self.config:
+            logger.info('Loading pre-existing system from PDB and XML files')
+            pdb_file = self.config['system_pdb']
+            xml_file = self.config['system_xml']
+            
+            input_top, input_system = load_openmm_system(pdb_file, xml_file)
+            input_positions = input_top.positions
+            unit_cell = input_top.topology.getPeriodicBoxVectors()
+            
+            # Reconstruct components from loaded system
+            self.components = self.reconstruct_components(input_top, input_system)
+        else:
+            # Traditional workflow: generate params and build system
+            nonbonded_params = self.generate_ff_params(self.config['smiles'])
+            self.components = self.build_system(
+                self.config['natoms'],
+                self.config['components'],
+                self.config['working_dir'],
+            )
+            gro_file = f"{self.params_dir}/solvent_salt.gro"
+            top_file = f"{self.params_dir}/system.top"
+            grofileparser = app.GromacsGroFile(gro_file)
+            input_positions = grofileparser.positions
+            unit_cell = grofileparser.getUnitCellDimensions()
+            input_top, input_system = generate_openmm_system(
+                top_file,
+                nonbonded_params,
+                unit_cell,
+            )
+        
         logger.info('npt run')
         npt_positions, npt_box_vec = npt_run(
             input_top,
@@ -438,51 +558,77 @@ class HVapProtocol(Protocol):
         logger.info('running hvap protocol')
         npt_steps = 1500000
         nvt_steps = 5000000
-        nonbonded_params = self.generate_ff_params(self.config['smiles'])
-        self.components = self.build_system(
-            self.config['natoms'],
-            self.config['components'],
-            self.config['working_dir'],
-        )
-        _ = self.build_system(
-            self.config['natoms'],
-            self.config['components'],
-            self.config['working_dir'],
-            build_gas=True,
-        )
-        gro_file = f"{self.params_dir}/solvent_salt.gro"
-        top_file = f"{self.params_dir}/system.top"
-        gas_gro_file = f"{self.params_dir}/solvent_salt_gas.gro"
-        gas_top_file = f"{self.params_dir}/system_gas.top"
-
+        
+        # Check if pre-existing system files are provided
+        if 'system_pdb' in self.config and 'system_xml' in self.config and \
+           'system_pdb_gas' in self.config and 'system_xml_gas' in self.config:
+            logger.info('Loading pre-existing systems from PDB and XML files')
+            
+            # Load liquid phase system
+            liq_pdb_file = self.config['system_pdb']
+            liq_xml_file = self.config['system_xml']
+            liq_top, liq_system = load_openmm_system(liq_pdb_file, liq_xml_file)
+            liq_positions = liq_top.positions
+            liq_unit_cell = liq_top.topology.getPeriodicBoxVectors()
+            
+            # Load gas phase system
+            gas_pdb_file = self.config['system_pdb_gas']
+            gas_xml_file = self.config['system_xml_gas']
+            gas_top, gas_system = load_openmm_system(gas_pdb_file, gas_xml_file)
+            gas_positions = gas_top.positions
+            
+            # Reconstruct components from loaded system
+            self.components = self.reconstruct_components(liq_top, liq_system)
+        else:
+            # Traditional workflow: generate params and build system
+            nonbonded_params = self.generate_ff_params(self.config['smiles'])
+            self.components = self.build_system(
+                self.config['natoms'],
+                self.config['components'],
+                self.config['working_dir'],
+            )
+            _ = self.build_system(
+                self.config['natoms'],
+                self.config['components'],
+                self.config['working_dir'],
+                build_gas=True,
+            )
+            gro_file = f"{self.params_dir}/solvent_salt.gro"
+            top_file = f"{self.params_dir}/system.top"
+            gas_gro_file = f"{self.params_dir}/solvent_salt_gas.gro"
+            gas_top_file = f"{self.params_dir}/system_gas.top"
+            
+            grofileparser = app.GromacsGroFile(gro_file)
+            liq_positions = grofileparser.positions
+            liq_unit_cell = grofileparser.getUnitCellDimensions()
+            liq_top, liq_system = generate_openmm_system(
+                top_file,
+                nonbonded_params,
+                liq_unit_cell,
+            )
+            
+            grofileparser = app.GromacsGroFile(gas_gro_file)
+            gas_positions = grofileparser.positions
+            gas_top, gas_system = generate_openmm_system(
+                gas_top_file,
+                nonbonded_params,
+                unit_cell=None,
+            )
+        
         logger.info('running liquid phase')
-        grofileparser = app.GromacsGroFile(gro_file)
-        input_positions = grofileparser.positions
-        unit_cell = grofileparser.getUnitCellDimensions()
-        liq_top, liq_system = generate_openmm_system(
-            top_file,
-            nonbonded_params,
-            unit_cell,
-        )
         npt_run(
             top=liq_top,
             system=liq_system,
-            positions=input_positions,
+            positions=liq_positions,
             temperature=self.config['temperature'],
             npt_steps=npt_steps,
             work_dir=self.output_dir,
         )
+        
         logger.info('running gas phase')
-        grofileparser = app.GromacsGroFile(gas_gro_file)
-        input_positions = grofileparser.positions
-        gas_top, gas_system = generate_openmm_system(
-            gas_top_file,
-            nonbonded_params,
-            unit_cell=None,
-        )
         nvt_run(top=gas_top,
                 system=gas_system,
-                positions=input_positions,
+                positions=gas_positions,
                 box_vec=None,
                 temperature=self.config['temperature'],
                 nvt_steps=nvt_steps,
