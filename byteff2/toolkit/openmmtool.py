@@ -29,6 +29,26 @@ from bytemol.toolkit.asetool.basecalculator import BaseCalculator
 logger = logging.getLogger(__name__)
 
 
+def load_openmm_system(pdb_file: str, xml_file: str) -> tuple[app.PDBFile, omm.System]:
+    """Load a PDB file and a serialized OpenMM System XML file.
+    
+    Args:
+        pdb_file: Path to the PDB file
+        xml_file: Path to the serialized OpenMM System XML file
+        
+    Returns:
+        A tuple of (PDBFile, System)
+    """
+    logger.info(f'Loading PDB file from {pdb_file}')
+    pdb = app.PDBFile(pdb_file)
+    
+    logger.info(f'Loading OpenMM System from {xml_file}')
+    with open(xml_file, 'r') as f:
+        system = omm.XmlSerializer.deserialize(f.read())
+    
+    return pdb, system
+
+
 def nx_covalent_map_and_pairs(natoms: int, pairs: Iterable) -> tuple[dict]:
     graph = nx.Graph()
 
