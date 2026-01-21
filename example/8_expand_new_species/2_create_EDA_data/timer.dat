@@ -1,0 +1,62 @@
+
+Host: am3-peichenzhong-group-MS-7E47
+
+Timers On : Tue Jan 20 20:15:05 2026
+Timers Off: Tue Jan 20 20:15:06 2026
+
+Wall Time:        0.27 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: am3-peichenzhong-group-MS-7E47
+
+Timers On : Tue Jan 20 20:17:54 2026
+Timers Off: Tue Jan 20 20:17:55 2026
+
+Wall Time:        1.43 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: am3-peichenzhong-group-MS-7E47
+
+Timers On : Tue Jan 20 20:19:02 2026
+Timers Off: Tue Jan 20 20:19:02 2026
+
+Wall Time:        0.24 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+
+--------------------------------------------------------------------------------------
+
+**************************************************************************************
+
+Host: am3-peichenzhong-group-MS-7E47
+
+Timers On : Tue Jan 20 20:23:35 2026
+Timers Off: Tue Jan 20 20:23:36 2026
+
+Wall Time:        0.80 seconds
+
+                                                       Time (seconds)
+Module                                       User      System        Wall        Calls
+V: Grid                             :      0.717u      0.017s      0.056w      1 calls
+build grid                          :      0.317u      0.017s      0.024w      1 calls
+post-process grid                   :      0.400u      0.000s      0.032w      1 calls
+
+--------------------------------------------------------------------------------------
+V: Grid                             :      0.717u      0.017s      0.056w      1 calls
+| build grid                        :      0.317u      0.017s      0.024w      1 calls
+| post-process grid                 :      0.400u      0.000s      0.032w      1 calls
+
+**************************************************************************************

@@ -1,8 +1,8 @@
 {
     "protocol": "Density",
-    "params_dir": "density_params",
-    "output_dir": "density_results",
-    "working_dir": "density_working_dir",
+    "params_dir": "params",
+    "output_dir": "density_results/test",
+    "working_dir": "density_working_dir/test",
     "temperature": 298,
     "natoms": 10000,
     "components": {

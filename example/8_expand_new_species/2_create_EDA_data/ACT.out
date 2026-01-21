@@ -1,0 +1,293 @@
+
+    -----------------------------------------------------------------------
+          Psi4: An Open-Source Ab Initio Electronic Structure Package
+                               Psi4 1.10 release
+
+                         Git: Rev {} zzzzzzz 
+
+
+    D. G. A. Smith, L. A. Burns, A. C. Simmonett, R. M. Parrish,
+    M. C. Schieber, R. Galvelis, P. Kraus, H. Kruse, R. Di Remigio,
+    A. Alenaizan, A. M. James, S. Lehtola, J. P. Misiewicz, M. Scheurer,
+    R. A. Shaw, J. B. Schriber, Y. Xie, Z. L. Glick, D. A. Sirianni,
+    J. S. O'Brien, J. M. Waldrop, A. Kumar, E. G. Hohenstein,
+    B. P. Pritchard, B. R. Brooks, H. F. Schaefer III, A. Yu. Sokolov,
+    K. Patkowski, A. E. DePrince III, U. Bozkaya, R. A. King,
+    F. A. Evangelista, J. M. Turney, T. D. Crawford, C. D. Sherrill,
+    J. Chem. Phys. 152(18) 184108 (2020). https://doi.org/10.1063/5.0006002
+
+                            Additional Code Authors
+    E. T. Seidl, C. L. Janssen, E. F. Valeev, M. L. Leininger,
+    J. F. Gonthier, R. M. Richard, H. R. McAlexander, M. Saitow, X. Wang,
+    P. Verma, M. H. Lechner, A. Jiang, S. Behnle, A. G. Heide,
+    M. F. Herbst, D. L. Poole, T. Győri, E. C. Mitchell, J. P. Pederson,
+    and A. M. Wallace
+
+             Previous Authors, Complete List of Code Contributors,
+                       and Citations for Specific Modules
+    https://github.com/psi4/psi4/blob/master/codemeta.json
+    https://github.com/psi4/psi4/graphs/contributors
+    https://psicode.org/psi4manual/master/introduction.html#citing-psifour
+
+    -----------------------------------------------------------------------
+
+
+    Psi4 started on: Tuesday, 20 January 2026 08:23PM
+
+    Process ID: 2883146
+    Host:       am3-peichenzhong-group-MS-7E47
+    PSIDATADIR: /home/am3-peichenzhong-group/miniconda3/envs/bff/share/psi4
+    Memory:     500.0 MiB
+    Threads:    8
+    Addons:     a̶d̶c̶c̶, a̶m̶b̶i̶t̶, b̶s̶e̶, c̶c̶t̶3̶, c̶f̶o̶u̶r̶, c̶h̶e̶m̶p̶s̶2̶, c̶p̶p̶e̶, d̶d̶x̶,
+                d̶f̶t̶d̶3̶, d̶f̶t̶d̶4̶, dkh, ecpint, einsums, f̶o̶r̶t̶e̶, g̶a̶u̶x̶c̶, g̶c̶p̶,
+                g̶d̶m̶a̶, geometric, g̶p̶u̶_̶d̶f̶c̶c̶, i̶n̶t̶e̶g̶r̶a̶t̶o̶r̶x̶x̶, i̶p̶i̶,
+                l̶i̶b̶e̶f̶p̶, m̶d̶i̶, m̶p̶2̶d̶, m̶r̶c̶c̶, ooo, o̶p̶e̶n̶f̶e̶r̶m̶i̶o̶n̶p̶s̶i̶4̶,
+                pcmsolver, p̶s̶i̶4̶f̶o̶c̶k̶c̶i̶, p̶s̶i̶x̶a̶s̶, r̶e̶s̶p̶, s̶i̶m̶i̶n̶t̶,
+                s̶n̶s̶m̶p̶2̶, v̶2̶r̶d̶m̶_̶c̶a̶s̶s̶c̶f̶
+
+  ==> Input File <==
+
+--------------------------------------------------------------------------
+
+memory 4 GB
+
+molecule {
+  0 1
+  C    -1.26599202    0.24150627    0.09237132
+  C     0.06849478    0.15525835   -0.59757582
+  O     0.20412160    0.46268441   -1.78085484
+  C     1.22892527   -0.32552589    0.23101678
+  H    -2.02222001    0.60119506   -0.61085934
+  H    -1.20094210    0.94075423    0.92959303
+  H    -1.55830219   -0.74897130    0.44962085
+  H     1.02639014   -1.33640645    0.59325688
+  H     2.13576919   -0.34381402   -0.37979474
+  H     1.38375533    0.35331934    1.07322588
+
+}
+
+set {
+  basis def2-svpd
+  scf_type df
+  reference rks
+  geom_maxiter 100  # 设置最大优化步数
+}
+
+# 直接让 Psi4 进行优化，而不是只算梯度
+optimize('b3lyp-d3bj')
+--------------------------------------------------------------------------
+
+  Memory set to   3.725 GiB by Python driver.
+
+Scratch directory: /tmp/
+gradient() will perform analytic gradient computation.
+   => Libint2 <=
+
+    Primary   basis highest AM E, G, H:  6, 6, 3
+    Auxiliary basis highest AM E, G, H:  7, 7, 4
+    Onebody   basis highest AM E, G, H:  -, -, -
+    Solid Harmonics ordering:            Gaussian
+
+*** tstart() called on am3-peichenzhong-group-MS-7E47
+*** at Tue Jan 20 20:23:36 2026
+
+   => Loading Basis Set <=
+
+    Name: DEF2-SVPD
+    Role: ORBITAL
+    Keyword: BASIS
+    atoms 1-2, 4 entry C          line   101 file /home/am3-peichenzhong-group/miniconda3/envs/bff/share/psi4/basis/def2-svpd.gbs 
+    atoms 3      entry O          line   149 file /home/am3-peichenzhong-group/miniconda3/envs/bff/share/psi4/basis/def2-svpd.gbs 
+    atoms 5-10   entry H          line    14 file /home/am3-peichenzhong-group/miniconda3/envs/bff/share/psi4/basis/def2-svpd.gbs 
+
+   => B3LYP-D3(BJ): Empirical Dispersion <=
+
+    Grimme's -D3 (BJ-damping) Dispersion Correction
+    Grimme S.; Ehrlich S.; Goerigk L. (2011), J. Comput. Chem., 32: 1456
+
+        s6 =       1.000000
+        s8 =       1.988900
+        a1 =       0.398100
+        a2 =       4.421100
+
+
+         ---------------------------------------------------------
+                                   SCF
+               by Justin Turney, Rob Parrish, Andy Simmonett
+                          and Daniel G. A. Smith
+                              RKS Reference
+                        8 Threads,   3814 MiB Core
+         ---------------------------------------------------------
+
+  ==> Geometry <==
+
+    Molecular point group: c1
+    Full point group: C1
+
+    Geometry (in Angstrom), charge = 0, multiplicity = 1:
+
+       Center              X                  Y                   Z               Mass       
+    ------------   -----------------  -----------------  -----------------  -----------------
+         C           -1.324650560890     0.108544289663     0.604135552888    12.000000000000
+         C            0.009836239110     0.022296369663    -0.085811587112    12.000000000000
+         O            0.145463059110     0.329722429663    -1.269090607112    15.994914619570
+         C            1.170266729110    -0.458487870337     0.742781012888    12.000000000000
+         H           -2.080878550890     0.468233079663    -0.099095107112     1.007825032230
+         H           -1.259600640890     0.807792249663     1.441357262888     1.007825032230
+         H           -1.616960730890    -0.881933280337     0.961385082888     1.007825032230
+         H            0.967731599110    -1.469368430337     1.105021112888     1.007825032230
+         H            2.077110649110    -0.476776000337     0.131969492888     1.007825032230
+         H            1.325096789110     0.220357359663     1.584990112888     1.007825032230
+
+  Running in c1 symmetry.
+
+  Rotational constants: A =      0.33717  B =      0.28611  C =      0.16456 [cm^-1]
+  Rotational constants: A =  10108.04326  B =   8577.22278  C =   4933.31986 [MHz]
+  Nuclear repulsion =  119.338843249041275
+
+  Charge       = 0
+  Multiplicity = 1
+  Electrons    = 32
+  Nalpha       = 16
+  Nbeta        = 16
+
+  ==> Algorithm <==
+
+  SCF Algorithm Type is DF.
+  DIIS enabled.
+  MOM disabled.
+  Fractional occupation disabled.
+  Guess Type is SAD.
+  Energy threshold   = 1.00e-08
+  Density threshold  = 1.00e-08
+  Integral threshold = 1.00e-12
+
+  ==> Primary Basis <==
+
+  Basis Set: DEF2-SVPD
+    Blend: DEF2-SVPD
+    Number of shells: 57
+    Number of basis functions: 131
+    Number of Cartesian functions: 139
+    Spherical Harmonics?: true
+    Max angular momentum: 2
+
+  ==> DFT Potential <==
+
+   => LibXC <=
+
+    Version 7.0.0
+    S. Lehtola, C. Steigemann, M. J.T. Oliveira, and M. A.L. Marques.,  SoftwareX 7, 1–5 (2018) (10.1016/j.softx.2017.11.002)
+
+   => Composite Functional: B3LYP-D3BJ2B <= 
+
+    B3LYP-d3bj2b Hyb-GGA Exchange-Correlation Functional
+
+    P. J. Stephens, F. J. Devlin, C. F. Chabalowski, and M. J. Frisch.,  J. Phys. Chem. 98, 11623 (1994) (10.1021/j100096a001)
+
+    Deriv               =              1
+    GGA                 =           TRUE
+    Meta                =          FALSE
+
+    Exchange Hybrid     =           TRUE
+    MP2 Hybrid          =          FALSE
+
+   => Exchange Functionals <=
+
+    0.0800   Slater exchange
+    0.7200         Becke 88
+
+   => Exact (HF) Exchange <=
+
+    0.2000               HF 
+
+   => Correlation Functionals <=
+
+    0.1900   Vosko, Wilk & Nusair (VWN5_RPA)
+    0.8100   Lee, Yang & Parr
+
+   => LibXC Density Thresholds  <==
+
+    XC_HYB_GGA_XC_B3LYP:  1.00E-15 
+
+   => Molecular Quadrature <=
+
+    Radial Scheme          =       TREUTLER
+    Pruning Scheme         =           NONE
+    Nuclear Scheme         =       TREUTLER
+
+    Blocking Scheme        =         OCTREE
+    BS radius alpha        =              1
+    Pruning alpha          =              1
+    Radial Points          =             75
+    Spherical Points       =            302
+    Total Points           =         215757
+    Total Blocks           =           1635
+    Max Points             =            256
+    Max Functions          =            130
+    Weights Tolerance      =       1.00E-15
+
+   => Loading Basis Set <=
+
+    Name: (DEF2-SVPD AUX)
+    Role: JKFIT
+    Keyword: DF_BASIS_SCF
+    atoms 1-2, 4 entry C          line   198 file /home/am3-peichenzhong-group/miniconda3/envs/bff/share/psi4/basis/def2-universal-jkfit.gbs 
+    atoms 3      entry O          line   318 file /home/am3-peichenzhong-group/miniconda3/envs/bff/share/psi4/basis/def2-universal-jkfit.gbs 
+    atoms 5-10   entry H          line    18 file /home/am3-peichenzhong-group/miniconda3/envs/bff/share/psi4/basis/def2-universal-jkfit.gbs 
+
+
+Traceback (most recent call last):
+  File "/home/am3-peichenzhong-group/miniconda3/envs/bff/bin/psi4", line 388, in <module>
+    exec(content)
+  File "<string>", line 34, in <module>
+  File "/home/am3-peichenzhong-group/miniconda3/envs/bff/lib/python3.11/site-packages/psi4/driver/driver.py", line 1251, in optimize
+    G, wfn = gradient(lowername, return_wfn=True, molecule=molecule, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/am3-peichenzhong-group/miniconda3/envs/bff/lib/python3.11/site-packages/psi4/driver/driver.py", line 640, in gradient
+    wfn = procedures['gradient'][lowername](lowername, molecule=molecule, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/am3-peichenzhong-group/miniconda3/envs/bff/lib/python3.11/site-packages/psi4/driver/procrouting/proc.py", line 96, in select_scf_gradient
+    return func(name, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/am3-peichenzhong-group/miniconda3/envs/bff/lib/python3.11/site-packages/psi4/driver/procrouting/proc.py", line 2690, in run_scf_gradient
+    ref_wfn = run_scf(name, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/am3-peichenzhong-group/miniconda3/envs/bff/lib/python3.11/site-packages/psi4/driver/procrouting/proc.py", line 2590, in run_scf
+    scf_wfn = scf_helper(name, post_scf=False, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/am3-peichenzhong-group/miniconda3/envs/bff/lib/python3.11/site-packages/psi4/driver/procrouting/proc.py", line 1837, in scf_helper
+    disp_energy = scf_wfn._disp_functor.compute_energy(scf_wfn.molecule(), scf_wfn)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/am3-peichenzhong-group/miniconda3/envs/bff/lib/python3.11/site-packages/psi4/driver/procrouting/empirical_dispersion.py", line 281, in compute_energy
+    jobrec = qcng.compute(
+             ^^^^^^^^^^^^^
+  File "/home/am3-peichenzhong-group/miniconda3/envs/bff/lib/python3.11/site-packages/qcengine/compute.py", line 79, in compute
+    executor = get_program(program)
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/home/am3-peichenzhong-group/miniconda3/envs/bff/lib/python3.11/site-packages/qcengine/programs/base.py", line 83, in get_program
+    raise ResourceError(f"Program {name} is registered with QCEngine, but cannot be found.") from err
+
+qcengine.exceptions.ResourceError: Program s-dftd3 is registered with QCEngine, but cannot be found.
+
+
+Printing out the relevant lines from the Psithon --> Python processed input file:
+    core.IO.set_default_namespace("")
+    core.set_global_option("BASIS", "def2-svpd")
+    core.set_global_option("SCF_TYPE", "df")
+    core.set_global_option("REFERENCE", "rks")
+    core.set_global_option("GEOM_MAXITER", 100)
+--> optimize('b3lyp-d3bj')
+
+!--------------------------------------------------------------------!
+!                                                                    !
+!  Program s-dftd3 is registered with QCEngine, but cannot be found. !
+!                                                                    !
+!--------------------------------------------------------------------!
+
+    Psi4 stopped on: Tuesday, 20 January 2026 08:23PM
+    Psi4 wall time for execution: 0:00:00.59
+
+*** Psi4 encountered an error. Buy a developer more coffee!
+*** Resources and help at github.com/psi4/psi4.
