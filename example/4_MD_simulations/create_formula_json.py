@@ -126,14 +126,16 @@ def main():
             # 2. 构建 Components (拆分阳离子/阴离子)
             salt_info = chemicals[salt_key]
             components = {}
-            
+
+            # Add Solvents needed do first!!!!!!!!!!!!!!!!!
+            # need to figure why this order matters
+            # A: generate_system_gro function depends on it
+            for s_name, s_count in n_solvs.items():
+                components[s_name] = s_count
+
             # Add Ions
             components[salt_info['cation']] = n_salt
             components[salt_info['anion']] = n_salt
-            
-            # Add Solvents
-            for s_name, s_count in n_solvs.items():
-                components[s_name] = s_count
             
             # 3. 构建 Smiles 字典 (仅包含用到的组分)
             used_smiles = {}
