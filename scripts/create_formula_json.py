@@ -113,7 +113,7 @@ def calculate_composition(target_atoms, salt_name, molarity, solvent_ratios):
 # ==========================================
 def main():
     # 设置输出目录
-    output_dir = Path("generated_json")
+    output_dir = Path("generated_json_test")
     output_dir.mkdir(exist_ok=True)
     
     print(f"Start processing {len(recipes)} recipes...\n")
