@@ -101,6 +101,48 @@ After successful installation, you should see:
 Success: Installed OpenMM and openmm-velocityVerlet.
 ```
 
+### Offline Installation (No Internet Access)
+
+If you are in an environment without internet access, you can use the pre-packaged offline bundle hosted on GitHub with Git LFS.
+
+**Step 1: Clone the offline bundle and reassemble**
+```bash
+# Install git-lfs if not already available
+sudo apt install git-lfs
+git lfs install
+
+# Clone the offline bundle repository (downloads ~3.4 GB via LFS)
+git clone https://github.com/junminchen/polff_offline.git
+cd polff_offline
+
+# Reassemble the split parts into a single archive
+cat polff_offline_bundle.tar.gz.part* > polff_offline_bundle.tar.gz
+```
+
+**Step 2: Extract**
+```bash
+tar xfz polff_offline_bundle.tar.gz
+cd <extracted-project-directory>
+```
+
+**Step 3: Run the offline installation script**
+```bash
+bash scripts/install_offline.sh
+```
+
+**Step 4: Activate the environment**
+```bash
+source ~/.bashrc
+source /usr/local/gromacs/bin/GMXRC
+export OPENMM_DIR=/usr/local/openmm
+export LD_LIBRARY_PATH=$OPENMM_DIR/lib:$LD_LIBRARY_PATH
+```
+
+> **Notes:**
+> - `git-lfs` must be installed before cloning, otherwise only LFS pointer files will be downloaded.
+> - The installation script requires `sudo` privileges to install Gromacs and OpenMM system-wide.
+> - The extracted directory already contains `offline_deps/` with all required dependencies.
+
 ### Trained Models
 The model and configuration file are available on HuggingFace [byteff2](https://huggingface.co/ByteDance-Seed/byteff2).
 
