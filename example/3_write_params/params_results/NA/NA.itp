@@ -1,0 +1,9 @@
+; ITP file created by ByteFF-ML, 2026-04-09 23:00:30.293830
+
+[ moleculetype ]
+;name             nrexcl
+ NA                    3
+
+[ atoms ]
+;       nr            type      resi   res      atom      cgnr      charge          mass ; qtot
+         1           na0bf         1   UNL       na0         1     1.00000       22.9900 ; qtot    1.000
